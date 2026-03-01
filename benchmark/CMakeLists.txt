@@ -54,22 +54,22 @@ add_executable(proxy_benchmark
         ../libstorage/src/storage_interface.h
         ../libstorage/src/redis.h
         ../libstorage/src/redis.cpp
-        ../libstorage/src/rocksdb.cpp
-        ../libstorage/src/rocksdb.h
         #../libstorage/src/memcached.cpp
         #../libstorage/src/memcached.h
         ../service/src/thrift_utils.h)
-add_dependencies(proxy_benchmark cpp_redis ssdb_rocks libcuckoo openssl_ep thrift_ep)
+if(ENABLE_SSDB_ROCKS)
+    target_sources(proxy_benchmark PRIVATE ../libstorage/src/rocksdb.cpp ../libstorage/src/rocksdb.h)
+endif()
+add_dependencies(proxy_benchmark cpp_redis libcuckoo openssl_ep thrift_ep)
+if(ENABLE_SSDB_ROCKS)
+    add_dependencies(proxy_benchmark ssdb_rocks)
+endif()
 target_link_libraries(proxy_benchmark
         ${THRIFTNB_LIBRARY}
         ${THRIFT_LIBRARY}
         ${LIBEVENT_LIBRARY}
         ${CPP_REDIS_LIBRARIES}
         ${OPENSSL_LIBRARIES}
-        ${SSDB_CLIENT_LIBRARY}
-        ${LEVELDB_LIBRARY}
-        ${SNAPPY_LIBRARY}
-        ${JEMALLOC_LIBRARY}
         ${CMAKE_DL_LIBS}
         ${ZLIB_LIBRARIES}
         ${BZIP2_LIBRARIES}
@@ -81,3 +81,11 @@ target_link_libraries(proxy_benchmark
         ${SERVICE_INCLUDE_LIBRARIES}
         ${CLIENT_INCLUDE_LIBRARIES}
         Threads::Threads)
+if(ENABLE_SSDB_ROCKS)
+    target_link_libraries(proxy_benchmark
+            ${SSDB_CLIENT_LIBRARY}
+            ${LEVELDB_LIBRARY}
+            ${SNAPPY_LIBRARY}
+            ${JEMALLOC_LIBRARY}
+            )
+endif()

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# Default: Redis-only build (ENABLE_SSDB_ROCKS=OFF). Pass -DENABLE_SSDB_ROCKS=ON to enable SSDB/RocksDB.
 mkdir -p cmakebuild
 cd cmakebuild
 cmake "$@" .. 

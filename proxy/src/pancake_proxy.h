@@ -22,7 +22,9 @@
 #include "queue.h"
 #include "storage_interface.h"
 #include "redis.h"
+#ifdef ENABLE_SSDB_ROCKS
 #include "rocksdb.h"
+#endif
 #include "thrift_response_client_map.h"
 //#include "memcached.h"
 

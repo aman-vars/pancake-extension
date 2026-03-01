@@ -25,6 +25,12 @@ set(CMAKE_VERBOSE_MAKEFILE false
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${PROJECT_SOURCE_DIR}/cmake")
 
+# Storage backends: Redis always; SSDB/RocksDB optional (fails on modern GCC if enabled)
+option(ENABLE_SSDB_ROCKS "Enable SSDB/RocksDB storage backend" OFF)
+if (ENABLE_SSDB_ROCKS)
+    add_definitions(-DENABLE_SSDB_ROCKS)
+endif()
+
 # Dependencies
 include(Dependencies)
 

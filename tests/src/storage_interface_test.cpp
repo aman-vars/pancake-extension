@@ -4,7 +4,9 @@
 #include "storage_interface.h"
 #include "redis.h"
 //#include "memcached.h"
+#ifdef ENABLE_SSDB_ROCKS
 #include "rocksdb.h"
+#endif
 #include "assert.h"
 #include <iostream>
 #include <cstring>
@@ -12,7 +14,9 @@
 struct options {
     bool testing_redis;
     bool testing_memcached;
+#ifdef ENABLE_SSDB_ROCKS
     bool testing_rocksdb;
+#endif
 };
 
 int usage();
@@ -49,8 +53,10 @@ int main(int argc, char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--redis") == 0)
             opts.testing_redis = true;
+#ifdef ENABLE_SSDB_ROCKS
         else if (std::strcmp(argv[i], "--rocksdb") == 0)
             opts.testing_rocksdb = true;
+#endif
         else if (std::strcmp(argv[i], "--memcached") == 0)
             opts.testing_memcached = true;
     }
@@ -59,9 +65,11 @@ int main(int argc, char* argv[]) {
         run_basic_test(std::make_shared<redis>("127.0.0.1", 5000));
     }
 
+#ifdef ENABLE_SSDB_ROCKS
     if (opts.testing_rocksdb){
         run_basic_test(std::make_shared<rocksdb>("127.0.0.1", 5001));
     }
+#endif
 
     if (opts.testing_memcached){
         //auto memcached_client = new memcached("127.0.0.1", 5002);

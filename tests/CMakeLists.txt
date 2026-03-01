@@ -7,30 +7,40 @@ find_package(Threads REQUIRED)
 
 include_directories(${STORAGE_INCLUDE} ${CLIENT_INCLUDE} ${PROXY_INCLUDE} ${BENCHMARK_INCLUDE} ${SERVICE_INCLUDE} )
 
-add_executable(storage_interface_test
+set(STORAGE_TEST_SOURCES
         src/storage_interface_test.cpp
         ../libstorage/src/storage_interface.h
         ../libstorage/src/redis.cpp
         ../libstorage/src/redis.h
-        ../libstorage/src/rocksdb.cpp
-        ../libstorage/src/rocksdb.h
+        )
+if(ENABLE_SSDB_ROCKS)
+    list(APPEND STORAGE_TEST_SOURCES ../libstorage/src/rocksdb.cpp ../libstorage/src/rocksdb.h)
+endif()
+add_executable(storage_interface_test ${STORAGE_TEST_SOURCES}
         #../libstorage/src/src/memcached.cpp
         #../libstorage/src/src/memcached.h
         )
-add_dependencies(storage_interface_test cpp_redis ssdb_rocks)
+add_dependencies(storage_interface_test cpp_redis)
+if(ENABLE_SSDB_ROCKS)
+    add_dependencies(storage_interface_test ssdb_rocks)
+endif()
 target_link_libraries(storage_interface_test
         Threads::Threads
         ${CPP_REDIS_LIBRARIES}
-        ${SSDB_CLIENT_LIBRARY}
-        ${LEVELDB_LIBRARY}
-        ${SNAPPY_LIBRARY}
-        ${JEMALLOC_LIBRARY}
         ${CMAKE_DL_LIBS}
         ${ZLIB_LIBRARIES}
         ${BZIP2_LIBRARIES}
         ${STORAGE_INCLUDE_LIBRARIES}
         #${LIBMEMCACHED_LIBRARIES}
         )
+if(ENABLE_SSDB_ROCKS)
+    target_link_libraries(storage_interface_test
+            ${SSDB_CLIENT_LIBRARY}
+            ${LEVELDB_LIBRARY}
+            ${SNAPPY_LIBRARY}
+            ${JEMALLOC_LIBRARY}
+            )
+endif()
 
 include_directories(${PROXY_INCLUDE})
 
@@ -114,12 +124,17 @@ add_executable(pancake_test
         ../libstorage/src/storage_interface.h
         ../libstorage/src/redis.h
         ../libstorage/src/redis.cpp
-        ../libstorage/src/rocksdb.cpp
-        ../libstorage/src/rocksdb.h
+        # rocksdb sources added conditionally below
         #../libstorage/src/memcached.cpp
         #../libstorage/src/memcached.h
         ../service/src/thrift_utils.h)
-add_dependencies(pancake_test cpp_redis ssdb_rocks libcuckoo openssl_ep thrift_ep)
+if(ENABLE_SSDB_ROCKS)
+    target_sources(pancake_test PRIVATE ../libstorage/src/rocksdb.cpp ../libstorage/src/rocksdb.h)
+endif()
+add_dependencies(pancake_test cpp_redis libcuckoo openssl_ep thrift_ep)
+if(ENABLE_SSDB_ROCKS)
+    add_dependencies(pancake_test ssdb_rocks)
+endif()
 target_link_libraries(pancake_test
         Threads::Threads
         ${THRIFTNB_LIBRARY}
@@ -127,10 +142,6 @@ target_link_libraries(pancake_test
         ${LIBEVENT_LIBRARY}
         ${CPP_REDIS_LIBRARIES}
         ${OPENSSL_LIBRARIES}
-        ${SSDB_CLIENT_LIBRARY}
-        ${LEVELDB_LIBRARY}
-        ${SNAPPY_LIBRARY}
-        ${JEMALLOC_LIBRARY}
         ${CMAKE_DL_LIBS}
         ${ZLIB_LIBRARIES}
         ${BZIP2_LIBRARIES}
@@ -142,3 +153,11 @@ target_link_libraries(pancake_test
         ${SERVICE_INCLUDE_LIBRARIES}
         ${CLIENT_INCLUDE_LIBRARIES}
         Threads::Threads)
+if(ENABLE_SSDB_ROCKS)
+    target_link_libraries(pancake_test
+            ${SSDB_CLIENT_LIBRARY}
+            ${LEVELDB_LIBRARY}
+            ${SNAPPY_LIBRARY}
+            ${JEMALLOC_LIBRARY}
+            )
+endif()

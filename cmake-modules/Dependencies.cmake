@@ -317,48 +317,49 @@ include_directories(SYSTEM ${CPP_REDIS_INCLUDE_DIR})
 message(STATUS "cpp_redis include dir: ${CPP_REDIS_INCLUDE_DIR}")
 message(STATUS "cpp_redis static library: ${CPP_REDIS_LIBRARIES}")
 
-set(SSDB_ROCKS_PREFIX "${PROJECT_BINARY_DIR}/external/ssdb_rocks")
-set(SSDB_ROCKS_HOME "${SSDB_ROCKS_PREFIX}/src/ssdb_rocks")
-set(LEVELDB_PATH "${SSDB_ROCKS_HOME}/deps/rocksdb-master")
-set(JEMALLOC_PATH "${SSDB_ROCKS_HOME}/deps/jemalloc-3.3.1")
-set(SNAPPY_PATH "${SSDB_ROCKS_HOME}/deps/snappy-1.1.0")
 
-set(LEVELDB_INCLUDE_DIR "${LEVELDB_PATH}/include")
-set(JEMALLOC_INCLUDE_DIR "${JEMALLOC_PATH}/include")
+# ssdb backend: only when ENABLE_SSDB_ROCKS=ON (fails on modern gcc)
+if(ENABLE_SSDB_ROCKS)
+    set(SSDB_ROCKS_PREFIX "${PROJECT_BINARY_DIR}/external/ssdb_rocks")
+    set(SSDB_ROCKS_HOME "${SSDB_ROCKS_PREFIX}/src/ssdb_rocks")
+    set(LEVELDB_PATH "${SSDB_ROCKS_HOME}/deps/rocksdb-master")
+    set(JEMALLOC_PATH "${SSDB_ROCKS_HOME}/deps/jemalloc-3.3.1")
+    set(SNAPPY_PATH "${SSDB_ROCKS_HOME}/deps/snappy-1.1.0")
 
-set(LEVELDB_LIBRARY "${LEVELDB_PATH}/librocksdb.a")
-set(SNAPPY_LIBRARY "${SNAPPY_PATH}/.libs/libsnappy.a")
-set(JEMALLOC_LIBRARY "${JEMALLOC_PATH}/lib/libjemalloc.a")
+    set(LEVELDB_INCLUDE_DIR "${LEVELDB_PATH}/include")
+    set(JEMALLOC_INCLUDE_DIR "${JEMALLOC_PATH}/include")
 
-set(SSDB_CLIENT_INCLUDE_DIR "${SSDB_ROCKS_HOME}/api/cpp")
-set(SSDB_CLIENT_LIBRARY "${SSDB_ROCKS_HOME}/api/cpp/libssdb.a")
+    set(LEVELDB_LIBRARY "${LEVELDB_PATH}/librocksdb.a")
+    set(SNAPPY_LIBRARY "${SNAPPY_PATH}/.libs/libsnappy.a")
+    set(JEMALLOC_LIBRARY "${JEMALLOC_PATH}/lib/libjemalloc.a")
 
-ExternalProject_Add(ssdb_rocks
-        GIT_REPOSITORY "https://github.com/anuragkh/ssdb-rocks.git"
-        PREFIX ${SSDB_ROCKS_PREFIX}
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./build.sh
-        BUILD_COMMAND "$(MAKE)"
-        INSTALL_COMMAND ""
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
-        LOG_BUILD ON
-        LOG_INSTALL ON)
+    set(SSDB_CLIENT_INCLUDE_DIR "${SSDB_ROCKS_HOME}/api/cpp")
+    set(SSDB_CLIENT_LIBRARY "${SSDB_ROCKS_HOME}/api/cpp/libssdb.a")
 
-include_directories(SYSTEM ${LEVELDB_INCLUDE_DIR})
-include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
-include_directories(SYSTEM ${SSDB_CLIENT_INCLUDE_DIR})
+    ExternalProject_Add(ssdb_rocks
+            GIT_REPOSITORY "https://github.com/anuragkh/ssdb-rocks.git"
+            PREFIX ${SSDB_ROCKS_PREFIX}
+            BUILD_IN_SOURCE 1
+            CONFIGURE_COMMAND ./build.sh
+            BUILD_COMMAND "$(MAKE)"
+            INSTALL_COMMAND ""
+            LOG_DOWNLOAD ON
+            LOG_CONFIGURE ON
+            LOG_BUILD ON
+            LOG_INSTALL ON)
 
-message(STATUS "LevelDB include dir: ${LEVELDB_INCLUDE_DIR}")
-message(STATUS "LevelDB library: ${LEVELDB_LIBRARY}")
+    include_directories(SYSTEM ${LEVELDB_INCLUDE_DIR})
+    include_directories(SYSTEM ${JEMALLOC_INCLUDE_DIR})
+    include_directories(SYSTEM ${SSDB_CLIENT_INCLUDE_DIR})
 
-message(STATUS "Jemalloc include dir: ${JEMALLOC_INCLUDE_DIR}")
-message(STATUS "Jemalloc library: ${JEMALLOC_LIBRARY}")
-
-message(STATUS "Snappy library: ${SNAPPY_LIBRARY}")
-
-message(STATUS "SSDB Client include dir: ${SSDB_CLIENT_INCLUDE_DIR}")
-message(STATUS "SSDB Client library: ${SSDB_CLIENT_LIBRARY}")
+    message(STATUS "LevelDB include dir: ${LEVELDB_INCLUDE_DIR}")
+    message(STATUS "LevelDB library: ${LEVELDB_LIBRARY}")
+    message(STATUS "Jemalloc include dir: ${JEMALLOC_INCLUDE_DIR}")
+    message(STATUS "Jemalloc library: ${JEMALLOC_LIBRARY}")
+    message(STATUS "Snappy library: ${SNAPPY_LIBRARY}")
+    message(STATUS "SSDB Client include dir: ${SSDB_CLIENT_INCLUDE_DIR}")
+    message(STATUS "SSDB Client library: ${SSDB_CLIENT_LIBRARY}")
+endif(ENABLE_SSDB_ROCKS)
 
 find_package(ZLIB REQUIRED)
 include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})

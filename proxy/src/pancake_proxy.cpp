@@ -3,6 +3,8 @@
 //
 
 #include "pancake_proxy.h"
+#include <cstdlib>
+#include <iostream>
 
 void pancake_proxy::init(const std::vector<std::string> &keys, const std::vector<std::string> &values, void ** args){
     real_distribution_ = *(distribution *)args[0];
@@ -13,9 +15,16 @@ void pancake_proxy::init(const std::vector<std::string> &keys, const std::vector
         storage_interface_ = std::make_shared<redis>(server_host_name_, server_port_);
         cpp_redis::network::set_default_nb_workers(std::min(10, p_threads_));
     }
+#ifdef ENABLE_SSDB_ROCKS
     else if (server_type_ == "rocksdb") {
         storage_interface_ = std::make_shared<rocksdb>(server_host_name_, server_port_);
     }
+#else
+    else if (server_type_ == "rocksdb") {
+        std::cerr << "RocksDB backend not compiled in. Rebuild with -DENABLE_SSDB_ROCKS=ON or use -s redis." << std::endl;
+        exit(-1);
+    }
+#endif
     //else if (server_type_ == "memcached")
     //    storage_interface_ new memcached(server_host_name_, server_port_+i);
     for (int i = 1; i < server_count_; i++) {
@@ -311,6 +320,7 @@ void pancake_proxy::async_put(const sequence_id &seq_id, int queue_id, const std
 };
 
 std::vector<std::string> pancake_proxy::get_batch(int queue_id, const std::vector<std::string> &keys) {
+    std::cout << "GET_BATCH called with " << keys.size() << " keys" << std::endl; // MODIFIED -> want to make sure that get_batch() being called properly
     std::vector<std::string> _return;
     std::vector<std::future<std::string>> waiters;
     for (const auto &key: keys) {
@@ -387,9 +397,16 @@ void pancake_proxy::consumer_thread(int id, encryption_engine *enc_engine){
     if (server_type_ == "redis") {
         storage_interface = std::make_shared<redis>(server_host_name_, server_port_);
     }
+#ifdef ENABLE_SSDB_ROCKS
     else if (server_type_ == "rocksdb") {
         storage_interface = std::make_shared<rocksdb>(server_host_name_, server_port_);
     }
+#else
+    else if (server_type_ == "rocksdb") {
+        std::cerr << "RocksDB backend not compiled in. Rebuild with -DENABLE_SSDB_ROCKS=ON or use -s redis." << std::endl;
+        exit(-1);
+    }
+#endif
     //else if (server_type_ == "memcached")
     //    storage_interface_ new memcached(server_host_name_, server_port_+i);
     for (int i = 1; i < server_count_; i++) {
@@ -440,10 +457,10 @@ void pancake_proxy::responder_thread(){
         
         auto op_code = tuple.first;
         auto seq = tuple.second.first;
-        seq = sequence_queue_.pop();
         std::vector<std::string>results;
         for (int i = 0; i < tuple.second.second.size(); i++)
             results.push_back(tuple.second.second[i].get());
+        std::cout << "Sending results size: " << results.size() << std::endl; // MODIFIED -> want to verify size of vectors server is sending to client
         id_to_client_->async_respond_client(seq, op_code, results);
     }
     std::cout << "Quitting response thread" << std::endl;

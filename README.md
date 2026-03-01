@@ -20,13 +20,21 @@
 
 ## Building
 
+By default the project builds with **Redis only** (no SSDB/RocksDB). This is recommended for Docker and modern toolchains.
+
 After installing the requirements run
 
 ```bash
 ./build.sh
 ```
 
-at the top-level directory.
+at the top-level directory. To pass CMake options (e.g. explicit Redis-only):
+
+```bash
+./build.sh -DENABLE_SSDB_ROCKS=OFF
+```
+
+For Docker or CI, ensure `redis-server` and the build deps above are installed in the image; the default build does not require ssdb-rocks.
 
 Download one of our workload traces from s3 and place it into the root of pancake's directory.
 
