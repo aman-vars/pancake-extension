@@ -1,42 +1,37 @@
 //
 // Created by Lloyd Brown on 8/30/19.
 //
+// Portable high-resolution timer using std::chrono. Works on all architectures
+// (x86, ARM64/aarch64, etc.). Reports time in nanoseconds; suitable for
+// relative performance comparison (e.g. baseline vs DSE extension).
+//
 
 #ifndef PANCAKE_TIMER_H
 #define PANCAKE_TIMER_H
 
 #include <chrono>
-#include <math.h>
-#include "unistd.h"
+#include <cstdint>
 
-#define rdtscll(val) do { \
-    unsigned int __a,__d; \
-    __asm__ __volatile__("rdtsc" : "=a" (__a), "=d" (__d)); \
-    (val) = ((unsigned long long)__a) | (((unsigned long long)__d)<<32); \
-} while(0)
+namespace {
 
-// Number of ticks per us
-unsigned long long rdtscuhz(void) {
-    const int ntrials = 5;
-    const long sleeplen = (250 * 1000); // in us
-    double freq = 0.0;
-
-    for (int i = 0; i < ntrials; i++) {
-        unsigned long long start, end, t;
-        double hz;
-
-        auto s = std::chrono::high_resolution_clock::now();
-        rdtscll(start);
-        usleep(sleeplen);
-        rdtscll(end);
-        auto e = std::chrono::high_resolution_clock::now();
-        t = std::chrono::duration_cast<std::chrono::microseconds>(e - s).count();
-        hz = ((double)(end - start))/t;
-        freq += hz;
-    }
-
-    freq = round(freq/ntrials);
-    return (unsigned long long) freq;
+inline uint64_t get_steady_ns() {
+    using clock = std::chrono::steady_clock;
+    auto now = clock::now().time_since_epoch();
+    return static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
 }
 
-#endif //PANCAKE_TIMER_H
+}  // namespace
+
+// Capture current time in nanoseconds (monotonic). Same API as legacy rdtscll
+// so call sites need no changes. "Ticks" here are nanoseconds.
+#define rdtscll(val) do { (val) = get_steady_ns(); } while (0)
+
+// Return "ticks per microsecond" so that (ticks_per_ns = rdtscuhz()/1000) gives
+// ticks_per_ns = 1.0 and (end-start)/ticks_per_ns = duration in nanoseconds.
+// Portable: we use nanosecond ticks, so 1000 "ticks"/us = 1 tick/ns.
+inline unsigned long long rdtscuhz(void) {
+    return 1000u;
+}
+
+#endif // PANCAKE_TIMER_H
