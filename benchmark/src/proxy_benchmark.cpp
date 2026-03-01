@@ -118,7 +118,7 @@ void run_benchmark(int run_time, bool stats, std::vector<int> &latencies, int cl
         }
         e = std::chrono::high_resolution_clock::now();
         elapsed = static_cast<int>(std::chrono::duration_cast<std::chrono::microseconds>(e - s).count());
-        i = (i+1)%keys_values_pair.first.size();
+        i = (i+1)%trace.size(); // MODIFIED -> benchmark only ever uses trace indices 0-49 so minimal valid trace is 50 batches of 50 GETS
     }
     if (stats) 
         ops = client.num_requests_satisfied() - ops;
